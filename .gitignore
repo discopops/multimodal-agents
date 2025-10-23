@@ -1,4 +1,6 @@
 .agency_swarm_chats/
+qa_agent/screenshots/
+screenshots/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
