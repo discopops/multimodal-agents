@@ -27,6 +27,8 @@ from ad_creator_agent.ad_creator_agent import (  # noqa: E402 - must import afte
 load_dotenv()
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
+
 litellm.modify_params = True
 
 model = "gpt-5"
@@ -34,7 +36,7 @@ coder = create_agency_code_agent(
     model=model, reasoning_effort="high"
 )
 
-qa = create_qa_agent(model=model, reasoning_effort="medium")
+qa = create_qa_agent(model=model, reasoning_effort="medium", session_storage_dir="./qa_agent/browser_session")
 
 data_analyst = create_data_analyst_agent(model=model, reasoning_effort="medium")
 

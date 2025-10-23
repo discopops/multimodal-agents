@@ -5,7 +5,6 @@ Keeps a single browser instance alive across multiple tool calls.
 
 import os
 import sys
-from typing import Optional
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -25,22 +24,32 @@ class BrowserSessionManager:
     _driver = None
     _session_dir = None
     
+    @classmethod
+    def set_default_session_dir(cls, session_dir: str):
+        """Set the default session directory for all browser sessions."""
+        os.environ['QA_SESSION_STORAGE_DIR'] = session_dir
+    
+    @classmethod
+    def get_default_session_dir(cls) -> str:
+        """Get the default session directory from environment or use fallback."""
+        return os.environ.get('QA_SESSION_STORAGE_DIR', './browser_session')
+    
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(BrowserSessionManager, cls).__new__(cls)
         return cls._instance
     
-    def get_driver(self, session_storage_dir: Optional[str] = None, headless: bool = True) -> webdriver.Chrome:
+    def get_driver(self, headless: bool = True) -> webdriver.Chrome:
         """Get the persistent browser driver instance."""
-        # Normalize session directory
-        requested_dir = session_storage_dir or "./browser_session"
+        # Get session directory from environment variable
+        requested_dir = self.get_default_session_dir()
                 
         if self._driver is None or self._session_dir != requested_dir:
             # If driver doesn't exist or session dir changed, reinitialize
             if self._driver is not None:
                 try:
                     self._driver.quit()
-                except:
+                except Exception:
                     pass
             self._session_dir = requested_dir
             self._initialize_driver(headless)
@@ -194,17 +203,17 @@ class BrowserSessionManager:
         except Exception:
             return False
     
-    def restart_if_needed(self, session_storage_dir: Optional[str] = None, headless: bool = True):
+    def restart_if_needed(self, headless: bool = True):
         """Restart the browser session if it's not alive."""
         if not self.is_alive():
             print("Browser session died, restarting...")
             if self._driver is not None:
                 try:
                     self._driver.quit()
-                except:
+                except Exception:
                     pass
             self._driver = None
-            self._session_dir = session_storage_dir or "./browser_session"
+            self._session_dir = self.get_default_session_dir()
             self._initialize_driver(headless)
 
 
@@ -212,9 +221,9 @@ class BrowserSessionManager:
 session_manager = BrowserSessionManager()
 
 
-def get_persistent_driver(session_storage_dir: Optional[str] = None, headless: bool = True) -> webdriver.Chrome:
+def get_persistent_driver(headless: bool = True) -> webdriver.Chrome:
     """Get a persistent browser driver that stays alive across tool calls."""
-    return session_manager.get_driver(session_storage_dir, headless)
+    return session_manager.get_driver(headless)
 
 
 def navigate_persistent_session(url: str):
@@ -227,6 +236,6 @@ def quit_persistent_session():
     session_manager.quit()
 
 
-def restart_session_if_needed(session_storage_dir: Optional[str] = None, headless: bool = True):
+def restart_session_if_needed(headless: bool = True):
     """Restart the session if it's not alive."""
-    session_manager.restart_if_needed(session_storage_dir, headless)
+    session_manager.restart_if_needed(headless)

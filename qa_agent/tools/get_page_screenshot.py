@@ -1,5 +1,4 @@
  
-from typing import Optional
 from urllib.parse import urlparse
 
 from pydantic import BaseModel
@@ -52,11 +51,6 @@ class GetPageScreenshot(BaseModel):
         description="Whether to enable cookies for session persistence",
     )
     
-    session_storage_dir: Optional[str] = Field(
-        default="./browser_session",
-        description="Directory to store session data (cookies, local storage). If not provided, uses temporary directory.",
-    )
-    
     default_window_width: int = Field(
         default=1920,
         description="Default window width to use for screenshots (prevents squashing)",
@@ -75,16 +69,10 @@ def get_page_screenshot(args: GetPageScreenshot) -> ToolOutputImage:
         return f"Error: Invalid URL format: {args.page_url}. Please provide a complete URL like http://localhost:3000"
     
     # Get persistent driver (stays alive across tool calls)
-    driver = get_persistent_driver(
-        session_storage_dir=args.session_storage_dir,
-        headless=args.headless
-    )
+    driver = get_persistent_driver(headless=args.headless)
     
     # Restart session if it died
-    restart_session_if_needed(
-        session_storage_dir=args.session_storage_dir,
-        headless=args.headless
-    )
+    restart_session_if_needed(headless=args.headless)
     
     # Navigate to the page
     navigate_persistent_session(args.page_url)
