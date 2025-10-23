@@ -22,7 +22,7 @@ from utils.session_manager import get_persistent_driver, navigate_persistent_ses
 
 class GetPageScreenshot(BaseModel):
     """
-    Get a screenshot of a webpage, specifically designed for localhost testing.
+    Get a screenshot of a webpage. NEVER use this function for file or api urls, use `IPythonInterpreter` instead.
     """
 
     page_url: str = Field(
@@ -153,21 +153,3 @@ def get_page_screenshot(args: GetPageScreenshot) -> ToolOutputImage:
     print(save_path)
     
     return [ToolOutputImage(type="image", image_url=f"data:image/png;base64,{screenshot_b64}", detail="auto")]
-
-
-
-# Create alias for Agency Swarm tool loading (expects class name = file name)
-# get_page_screenshot = GetPageScreenshot
-
-if __name__ == "__main__":
-    # Example usage with cookie persistence
-    tool = GetPageScreenshot(
-        page_url="https://app.databox.com/datawall/28ee867d4dd1f00d34a77fec44ba6d7032500dc68e0d07c",
-        wait_seconds=5,
-        full_page=True,
-        headless=True,
-        enable_cookies=True,  # Enable cookies for session persistence
-        session_storage_dir="./browser_session"  # Same directory as other tools
-    )
-    result = tool.run()
-    print(result)

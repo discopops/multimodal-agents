@@ -357,7 +357,7 @@ You: "Build a user login page with email/password fields, then test it"
 
 ### Data Analysis with Visualization
 ```
-You: "@AdCreatorAgent analyze my sales dashboard at https://dashboard.example.com"
+You: "@DataAnalystAgent analyze my sales dashboard at https://dashboard.example.com"
 
 1. Data Analyst navigates to the dashboard
 2. Captures screenshot to "see" the data
@@ -446,8 +446,34 @@ Product: "Lumos LED Desk Lamp" — dimmable, eye-care desk lamp with adjustable 
   - Use a palette of cool white (#F5F8FF), slate gray (#2A2F3A), and electric blue accent (#2D7DFF); prefer a minimal vector lamp/beam motif.
 ```
 
-### 📈 Data analysis and visualization
+### 📈 Dashboard analysis
 
 ```
 Analyze my dashboard: [DASHBOARD_VIEW_URL] and provide insides on the current performance. Extract hidden trends and build a graph for future estimates.
+```
+
+### 📈 Dataset analysis
+Pre-requisites:
+Publicly available dataset, that agent would be able to download by following provided url.
+
+You can setup a server with a demo dataset by following steps below:
+
+1. Navigate to test files folder
+    ```bash
+    cd data_analyst_agent\test_files
+    ```
+
+2. Start http server
+    ```bash
+    python -m http.server 8080 --bind 0.0.0.0
+    ```
+
+3. Use the following url when querying the agent
+    ```txt
+    http://localhost:8080/test_file.csv
+    ```
+
+Ask agent the following:
+```
+Analyze the store data at [FILE_URL] and provide me with some estimates on the further dynamics.
 ```
