@@ -6,7 +6,7 @@ from PIL import Image
 from agents.tool import ToolOutputImage, ToolOutputText
 
 # Constants
-IMAGES_DIR = "./ad_creator_agent/images"
+IMAGES_DIR = "./generated_images"
 OUTPUT_FORMAT = "png"
 
 

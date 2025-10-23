@@ -202,6 +202,11 @@ class InteractWithPage(BaseTool):
         default=True,
         description="Whether to enable cookies for session persistence",
     )
+    
+    session_storage_dir: Optional[str] = Field(
+        default="./browser_session",
+        description="Directory to store session data (cookies, local storage). If not provided, uses temporary directory.",
+    )
 
     def run(self):
         
@@ -212,10 +217,16 @@ class InteractWithPage(BaseTool):
                 return f"Error: Invalid URL format: {self.page_url}. Please provide a complete URL like http://localhost:3000"
             
             # Get persistent driver (stays alive across tool calls)
-            driver = get_persistent_driver(headless=self.headless)
+            driver = get_persistent_driver(
+                session_storage_dir=self.session_storage_dir,
+                headless=self.headless
+            )
             
             # Restart session if it died
-            restart_session_if_needed(headless=self.headless)
+            restart_session_if_needed(
+                session_storage_dir=self.session_storage_dir,
+                headless=self.headless
+            )
             
             # Navigate to the page
             navigate_persistent_session(self.page_url)
@@ -690,6 +701,7 @@ if __name__ == "__main__":
             MouseClickAction(x=10, y=20, button="left", click_count=1),
         ],
         enable_cookies=True,  # Enable cookies for session persistence
+        session_storage_dir="./browser_session"  # Will use temp directory, or specify absolute path like "/tmp/browser_session"
     )
     result = tool.run()
     print(result)

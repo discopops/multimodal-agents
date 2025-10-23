@@ -1,9 +1,5 @@
 .agency_swarm_chats/
 
-# Browser session data and screenshots
-browser_session/
-qa_agent/screenshots/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

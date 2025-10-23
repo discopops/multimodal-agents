@@ -12,19 +12,10 @@ from openai.types.shared.reasoning import Reasoning
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-def create_qa_agent(model:str = "gpt-5-mini", reasoning_effort: str = "medium", session_storage_dir: str = "./browser_session") -> Agent:
+def create_qa_agent(model:str = "gpt-5-mini", reasoning_effort: str = "medium") -> Agent:
     """Factory that returns a fresh QAAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
-    
-    Args:
-        model: The model to use for the agent
-        reasoning_effort: The reasoning effort level
-        session_storage_dir: Directory to store browser session data
     """
-    # Set the session storage directory for all browser tools
-    from qa_agent.tools.utils.session_manager import BrowserSessionManager
-    BrowserSessionManager.set_default_session_dir(session_storage_dir)
-    
     return Agent(
         name="QAAgent",
         description="An agent that performs QA testing of web pages.",

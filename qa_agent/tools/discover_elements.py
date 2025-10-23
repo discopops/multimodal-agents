@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from urllib.parse import urlparse
 
 from agency_swarm.tools import BaseTool
@@ -46,6 +46,11 @@ class DiscoverElements(BaseTool):
         default=True,
         description="Whether to enable cookies for session persistence",
     )
+    
+    session_storage_dir: Optional[str] = Field(
+        default="./browser_session",
+        description="Directory to store session data (cookies, local storage). If not provided, uses temporary directory.",
+    )
 
     def run(self):
         
@@ -56,10 +61,16 @@ class DiscoverElements(BaseTool):
                 return f"Error: Invalid URL format: {self.page_url}. Please provide a complete URL like http://localhost:3000"
             
             # Get persistent driver (stays alive across tool calls)
-            driver = get_persistent_driver(headless=True)  # Always headless for element discovery
+            driver = get_persistent_driver(
+                session_storage_dir=self.session_storage_dir,
+                headless=True  # Always headless for element discovery
+            )
             
             # Restart session if it died
-            restart_session_if_needed(headless=True)
+            restart_session_if_needed(
+                session_storage_dir=self.session_storage_dir,
+                headless=True
+            )
             
             # Navigate to the page
             navigate_persistent_session(self.page_url)
@@ -203,6 +214,7 @@ if __name__ == "__main__":
         include_text=True,
         include_attributes=True,
         enable_cookies=True,  # Enable cookies for session persistence
+        session_storage_dir="./browser_session"  # Same directory as interact tool
     )
     result = tool.run()
     print(result)
