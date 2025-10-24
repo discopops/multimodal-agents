@@ -4,6 +4,7 @@ from pydantic import Field
 from google import genai
 from ad_creator_agent.tools.utils import (
     IMAGES_DIR,
+    REFERENCE_FOLDER,
     validate_num_variants,
     get_api_key,
     load_image_by_name,
@@ -75,6 +76,8 @@ def edit_image(args: EditImage) -> ToolOutputImage:
         # Load input image
         image, image_path, load_error = load_image_by_name(args.input_image_name, IMAGES_DIR)
         if load_error:
+            image, image_path, load_error = load_image_by_name(args.input_image_name, REFERENCE_FOLDER, ['.png', '.jpg', '.jpeg'])
+        if load_error:
             return load_error
         print(f"Loaded image: {image_path}")
         
@@ -138,12 +141,23 @@ def edit_image(args: EditImage) -> ToolOutputImage:
 # edit_image = EditImage
 
 if __name__ == "__main__":
-    # Example usage with Google Gemini 2.5 Flash Image
-    tool = EditImage(
-        input_image_name="logo_image_variant_1",
-        edit_prompt="Change the logo color from red to blue",
-        output_image_name="logo_image_edited",
-        num_variants=1
+    import asyncio
+    import json
+    from agency_swarm import MasterContext, RunContextWrapper
+
+    ctx = MasterContext(user_context={}, thread_manager=None, agents={})
+    run_ctx = RunContextWrapper(context=ctx)
+    result = asyncio.run(
+        edit_image.on_invoke_tool(
+            run_ctx,
+            json.dumps({
+                "args": {
+                    "input_image_name": "agents-swarms-V3.2",
+                    "edit_prompt": "Change the text to 'Are image generation models good now?",
+                    "output_image_name": "logo_image_edited",
+                    "num_variants": 1
+                }
+            })
+        )
     )
-    result = tool.run()
     print(result)

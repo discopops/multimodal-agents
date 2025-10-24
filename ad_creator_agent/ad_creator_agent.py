@@ -3,6 +3,11 @@ import os
 from agency_swarm import Agent, ModelSettings
 from openai.types.shared.reasoning import Reasoning
 
+# import sys
+# parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# if parent_dir not in sys.path:
+#     sys.path.insert(0, parent_dir)
+
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 

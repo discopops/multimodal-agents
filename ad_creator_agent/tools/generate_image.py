@@ -14,20 +14,31 @@ from ad_creator_agent.tools.utils import (
     compress_image_for_base64,
 )
 from agents.tool import ToolOutputImage, function_tool
-from typing import Literal, Optional
+from typing import Literal, Optional, List
+from PIL import Image
 
 # Constants
-MODEL_NAME = "gemini-2.5-flash-image-preview"
+# Use the stable image model that supports multimodal contents (images + text)
+MODEL_NAME = "gemini-2.5-flash-image"
+# Hardcoded reference images folder (relative to this file)
+REFERENCE_FOLDER = os.path.join(os.path.dirname(__file__), "thumbnail_examples")
 
 
 class GenerateImage(BaseModel):
     """
-    Generate images using Google's Gemini 2.5 Flash Image (Nano Banana) model.
+    Generate thumbnail images using Google's Gemini 2.5 Flash Image model.
+
+    Designed for YouTube where bold composition, high contrast,
+    and strong subject separation are desired. Uses reference images from the
+    hardcoded folder `ad_creator_agent/tools/photos` (if present) to steer
+    style/composition.
     """
 
     prompt: str = Field(
         ...,
-        description="The text prompt describing the image to generate. Start with 'Generate an image of' and describe the image in detail.",
+        description=(
+            "Describe the thumbnail subject and style. Keep it concise and outcome-focused."
+        ),
     )
 
     file_name: str = Field(
@@ -43,9 +54,47 @@ class GenerateImage(BaseModel):
     aspect_ratio: Optional[
         Literal["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"]
     ] = Field(
-        default="1:1",
-        description="The aspect ratio of the generated image (default is 1:1)",
+        default="16:9",
+        description="Aspect ratio. Thumbnails typically use 16:9 (default)",
     )
+    include_reference_images: Optional[bool] = Field(
+        default=False,
+        description="Provides image generation with reference images. Set to true if you want to show user on the image or copy styling from existing thumbnails",
+    )
+
+
+def _prepare_contents(prompt: str) -> list:
+    """Build the multimodal contents list: hardcoded folder images then the prompt string.
+
+    Loads up to 8 images from REFERENCE_FOLDER with supported extensions
+    (png, jpg, jpeg, webp) in sorted filename order. Missing/unreadable files
+    are skipped silently.
+    """
+    contents: List[object] = []
+    reference_folder = REFERENCE_FOLDER
+    if reference_folder and os.path.isdir(reference_folder):
+        supported_exts = {".png", ".jpg", ".jpeg", ".webp"}
+        try:
+            files = sorted(os.listdir(reference_folder))
+        except Exception:
+            files = []
+        loaded = 0
+        for name in files:
+            if loaded >= 8:
+                break
+            _, ext = os.path.splitext(name.lower())
+            if ext not in supported_exts:
+                continue
+            file_path = os.path.join(reference_folder, name)
+            try:
+                image = Image.open(file_path)
+                contents.append(image)
+                loaded += 1
+            except Exception:
+                continue
+    contents.append(prompt)
+    return contents
+
 
 @function_tool
 def generate_image(args: GenerateImage) -> ToolOutputImage:
@@ -60,7 +109,7 @@ def generate_image(args: GenerateImage) -> ToolOutputImage:
         if api_error:
             return api_error
 
-        print(f"Generating image with prompt: {args.prompt}")
+        print(f"Generating thumbnail with prompt: {args.prompt}")
         print(f"Generating {args.num_variants} variant(s)")
 
         # Initialize the Google AI client
@@ -74,10 +123,17 @@ def generate_image(args: GenerateImage) -> ToolOutputImage:
             try:
                 print(f"Generating variant {variant_num}/{args.num_variants}")
 
-                # Generate image using Gemini 2.5 Flash Image
+                if args.include_reference_images:
+                    prompt = "I provided 5 thumbnail photos which I used in my previous videos, use them as a reference for how me and my thumbnails look like." \
+                            "Now, generate a new thumbnail for my next video, following the instructions below: " + args.prompt
+                    contents = _prepare_contents(prompt)
+                else:
+                    contents = [args.prompt]
+
+                # Generate image using Gemini 2.5 Flash Image with optional references
                 response = client.models.generate_content(
                     model=MODEL_NAME,
-                    contents=[args.prompt],
+                    contents=contents,
                     config=genai.types.GenerateContentConfig(
                         image_config=genai.types.ImageConfig(
                             aspect_ratio=args.aspect_ratio,
@@ -128,19 +184,23 @@ def generate_image(args: GenerateImage) -> ToolOutputImage:
 # generate_image = GenerateImage
 
 if __name__ == "__main__":
-    # Example usage with Google Gemini 2.5 Flash Image
-    tool = GenerateImage(
-        prompt="Generate an image of a clean, modern black laptop computer that is placed closed on a white marble surface with soft natural lighting, professional product photography style, shallow depth of field, premium aesthetic, commercial advertisement quality. No logo images. No text",
-        file_name="test_image",
-        aspect_ratio="16:9",
-    )
-    result = tool.run()
-    print(result)
+    import asyncio
+    import json
+    from agency_swarm import MasterContext, RunContextWrapper
 
-    # tool = GenerateImage(
-    #     prompt="Generate a round logo for a laptop brand called 'OmegaTech'. Ensure the logo is simple, modern, and recognizable. Use black and red color scheme for the logo.",
-    #     file_name="logo_image",
-    #     num_variants=2
-    # )
-    # result = tool.run()
-    # print(result)
+    ctx = MasterContext(user_context={}, thread_manager=None, agents={})
+    run_ctx = RunContextWrapper(context=ctx)
+    result = asyncio.run(
+        generate_image.on_invoke_tool(
+            run_ctx,
+            json.dumps({
+                "args": {
+                    "prompt": "I provided a few photos which I used in my previous videos. Generate a new thumbnail for my next video. I should be sitting at the desk. On the top left there should be a banner saying 'Build your own AI Agent'",
+                    "file_name": "test_image",
+                    "num_variants": 4,
+                    "aspect_ratio": "16:9",
+                }
+            })
+        )
+    )
+    print(result)

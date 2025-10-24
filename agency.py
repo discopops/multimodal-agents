@@ -42,7 +42,7 @@ ad_creator = create_ad_creator(model=model, reasoning_effort="medium")
 
 def create_agency(load_threads_callback=None):
     agency = Agency(
-        coder, data_analyst, ad_creator, qa,
+        ad_creator, coder, data_analyst, qa,
         name="MultimodalAgency",
         communication_flows=[
             (coder, qa),

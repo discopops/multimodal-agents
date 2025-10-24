@@ -6,6 +6,7 @@ from google import genai
 from PIL import Image
 from ad_creator_agent.tools.utils import (
     IMAGES_DIR,
+    REFERENCE_FOLDER,
     validate_num_variants,
     get_api_key,
     load_image_by_name,
@@ -76,6 +77,8 @@ def combine_images(args: CombineImages) -> ToolOutputImage:
         images = []
         for image_name in args.image_names:
             image, image_path, load_error = load_image_by_name(image_name, IMAGES_DIR, ['.png', '.jpg', '.jpeg'])
+            if load_error:
+                image, image_path, load_error = load_image_by_name(image_name, REFERENCE_FOLDER, ['.png', '.jpg', '.jpeg'])
             if load_error:
                 return load_error
             images.append(image)

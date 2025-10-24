@@ -2,6 +2,7 @@
 
 from .image_utils import (
     IMAGES_DIR,
+    REFERENCE_FOLDER,
     OUTPUT_FORMAT,
     validate_num_variants,
     get_api_key,
@@ -19,6 +20,7 @@ from .image_utils import (
 
 __all__ = [
     'IMAGES_DIR',
+    'REFERENCE_FOLDER',
     'OUTPUT_FORMAT',
     'validate_num_variants',
     'get_api_key',

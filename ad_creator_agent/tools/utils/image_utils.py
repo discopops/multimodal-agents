@@ -6,7 +6,8 @@ from PIL import Image
 from agents.tool import ToolOutputImage, ToolOutputText
 
 # Constants
-IMAGES_DIR = "./generated_images"
+IMAGES_DIR = os.path.join(os.path.dirname(__file__), "../generated_images")
+REFERENCE_FOLDER = os.path.join(os.path.dirname(__file__), "../thumbnail_examples")
 OUTPUT_FORMAT = "png"
 
 
